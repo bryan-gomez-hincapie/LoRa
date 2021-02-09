@@ -1,0 +1,44 @@
+version: '3'
+services:
+
+  #APIRest Service
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: lora
+    restart: unless-stopped
+    environment:
+      - MYSQL_HOST=192.168.0.214
+      - MYSQL_PORT=32000
+      - MYSQL_USER=root
+      - MYSQL_PASS=lora
+      - MYSQL_DATABASE=dragino
+    links:
+      - db
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+
+  #MySQL Service
+  db:
+    image: mysql:5.7
+    ports:
+      - "32000:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: lora
+    volumes:
+      - ./BD:/docker-entrypoint-initdb.d/:ro
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
