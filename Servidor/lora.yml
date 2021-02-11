@@ -1,0 +1,158 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lora-ns
+
+
+---
+#BDlora*****************
+#Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mslora
+  namespace: lora-ns
+  labels:
+    app: bd
+spec:
+  type: ClusterIP 
+  ports:
+    - name: "3306"
+      port: 3306
+  selector:
+      app: bd
+      tier: mslora
+---
+#Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: lora-ns
+  name: mslora-pv
+  labels:
+    app: bd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: "/home/volumen"
+
+---
+#Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mslora
+  namespace: lora-ns
+  labels:
+    app: bd
+spec:
+  selector:
+    matchLabels:
+      app: bd
+      tier: mslora
+  template:
+    metadata:
+      labels:
+        app: bd
+        tier: mslora
+    spec:
+      containers:
+      - image: mysql:5.7
+        name: mslora
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "lora"
+        ports:
+        - containerPort: 3306
+          name: mslora
+        volumeMounts:
+        - name: mslora-storage
+          mountPath: /var/lib/mysql
+      volumes:
+        - name: mslora-storage
+          hostPath:
+            path: /home/heberth/lora
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+        - 10.96.0.10
+        searches:
+        - apigateway-ns.svc.cluster.local
+        - lora-ns.svc.cluster.local
+        - svc.cluster.local
+        - cluster.local
+        - uao.edu.co
+        options:
+        - name: ndots
+          value: "5"
+---
+#API-LORA******************
+#Servicio
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: lora-ns
+  name: lora-service
+  labels:
+    app: lora
+spec:
+  type: NodePort
+  ports:
+  - name: "5000"
+    port: 5000
+  selector:
+    app: lora
+    tier: apilora
+---
+#Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: lora-ns
+  name: lora-deployment
+  labels:
+    app: lora
+spec:
+  selector:
+    matchLabels:
+      app: lora
+      tier: apilora
+  template:
+    metadata:
+      labels:
+        app: lora
+        tier: apilora
+    spec:
+      containers:
+      - image: 2166634/lora-server:v1
+        name: lora-container
+        env:
+        - name: MYSQL_HOST
+          value: "mslora"
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USER
+          value: "root"
+        - name: MYSQL_PASS
+          value: "lora"
+        - name: MYSQL_DATABASE
+          value: "dragino"
+        ports:
+        - containerPort: 5000
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+        - 10.96.0.10
+        searches:
+        - apigateway-ns.svc.cluster.local
+        - lora-ns.svc.cluster.local
+        - svc.cluster.local
+        - cluster.local
+        - uao.edu.co
+        options:
+        - name: ndots
+          value: "5"
