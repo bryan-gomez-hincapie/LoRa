@@ -6,6 +6,8 @@
 #define BAUDRATE 115200
 RH_RF95 rf95;
 
+//Nombre del gateway
+String gate = "PRUEBA";
 float frequency = 868.0;
 
 char DeviceID[20]="\0"; 
@@ -111,10 +113,7 @@ void receivepacket() {
 //    dataString += "/";
 //    dataString += frequency;
 
-    //Python
-    //Nombre del gateway
-    String gate = "PRUEBA";
-    
+    //Python    
     String dataString = "http://45.5.188.200:5000/lora-post?latitud=";
     dataString += lat;
     dataString += "&longitud=";
